@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Movie & Series Auction</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#080d16;--panel:#111b2a;--line:#2b4056;--gold:#ffd34f;--red:#ff4e55;--blue:#4ac8f4;--muted:#9fb0c4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#17283c 0,#080d16 55%);color:#f6f8fb;font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+header{text-align:center;padding:28px 16px 20px;border-bottom:1px solid #243448;background:linear-gradient(120deg,#251015,#101c2b 55%,#09232e)}
+.kicker{letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:800;font-size:.8rem}h1{font-size:clamp(2rem,6vw,4.4rem);line-height:1;margin:8px 0;color:var(--gold);text-shadow:3px 3px #5b2816;font-weight:1000;letter-spacing:-.04em}header p{margin:10px 0 0;color:#c9d6e4}
+main{max-width:1180px;margin:auto;padding:20px 14px 48px}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}.panel{background:linear-gradient(145deg,#142032,#0d1521);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 12px 28px #0003}.wide{grid-column:span 12}.half{grid-column:span 6}.third{grid-column:span 4}
+h2{font-size:1.15rem;margin:0 0 12px;letter-spacing:.03em}h2 .red{color:var(--red)}h2 .blue{color:var(--blue)}
+label{display:block;font-size:.84rem;color:var(--muted);margin:8px 0 4px}input{width:100%;background:#08111d;color:white;border:1px solid #354b61;border-radius:9px;padding:11px;font:inherit}
+button{border:0;border-radius:10px;padding:11px 14px;font:inherit;font-weight:800;cursor:pointer;transition:transform .12s,opacity .12s}button:hover{transform:translateY(-1px)}button:disabled{opacity:.35;cursor:not-allowed;transform:none}.primary{background:var(--gold);color:#17120a}.bluebtn{background:var(--blue);color:#06131b}.redbtn{background:var(--red);color:white}.ghost{background:#223247;color:#eef5ff;border:1px solid #3c526b}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.note{color:var(--muted);font-size:.88rem}.hidden{display:none!important}.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#070d16;border:1px solid #26384b;border-radius:12px;padding:12px;text-align:center}.stat strong{display:block;font-size:1.55rem;color:var(--gold)}.stat span{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.playerlist{display:flex;gap:8px;flex-wrap:wrap}.player{padding:8px 11px;border:1px solid #33475d;background:#0a1420;border-radius:999px;font-size:.9rem}.player b{color:var(--gold)}.status{font-size:.85rem;color:var(--blue);margin-top:8px;overflow-wrap:anywhere}
+.auctiontitle{font-size:clamp(1.5rem,4vw,2.8rem);font-weight:950;line-height:1.1;margin:6px 0 12px}.tag{display:inline-block;padding:4px 8px;border-radius:6px;font-size:.75rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.series{background:#4b171d;color:#ff8e91}.movie{background:#09394a;color:#7cddff}.bidnum{font-size:2.5rem;font-weight:1000;color:var(--gold)}.bidrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.bid-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.bid-controls input{width:90px}.listwrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}.titlelist{max-height:380px;overflow:auto;padding-right:4px}.titleitem{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #263548;font-size:.9rem}.num{font-size:.75rem;color:#07121b;background:var(--blue);border-radius:5px;min-width:24px;text-align:center;padding:2px 4px;font-weight:900}.serieslist .num{background:var(--red);color:white}.titleitem .smalltag{margin-left:auto;font-size:.7rem;color:var(--muted)}.owned{color:#a8e6a0}.log{height:170px;overflow:auto;background:#07101a;border-radius:10px;padding:10px;font-size:.84rem;color:#c5d2df}.log div{padding:3px 0;border-bottom:1px solid #172537}.rulegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.rule{border:1px solid #304258;background:#0a1420;border-radius:12px;padding:12px}.rule strong{display:block;color:var(--gold);margin-bottom:5px}.footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:22px}
+@media(max-width:760px){.half,.third{grid-column:span 12}.listwrap{grid-template-columns:1fr}.rulegrid{grid-template-columns:1fr 1fr}.statrow{grid-template-columns:1fr 1fr 1fr}.panel{padding:13px}}
+@media(max-width:420px){.rulegrid{grid-template-columns:1fr}.stat strong{font-size:1.25rem}}
+</style>
+</head>
+<body>
+<header><div class="kicker">Bid · Build · Collect · Win</div><h1>MOVIE & SERIES<br>AUCTION</h1><p>Build your dream collection. ₹50 budget · ₹2 starting price · 5 final picks</p></header>
+<main>
+<div class="grid">
+<section class="panel half" id="lobby">
+<h2>🚪 <span class="red">Create or join a room</span></h2>
+<label for="playerName">Your player name</label><input id="playerName" maxlength="18" placeholder="e.g. Cinephile" value="">
+<div class="actions"><button class="primary" id="createBtn">Create room (Host)</button></div>
+<label for="roomCode">Host room code</label><input id="roomCode" placeholder="Paste your friend's room code">
+<div class="actions"><button class="bluebtn" id="joinBtn">Join room</button></div>
+<p class="note">Everyone needs this page open and an internet connection. The host creates the room and shares the code. Multiplayer connection uses PeerJS.</p>
+<div class="status" id="connectionStatus">Not connected yet.</div>
+</section>
+<section class="panel half">
+<h2>📜 <span class="blue">Auction rules</span></h2>
+<div class="rulegrid">
+<div class="rule"><strong>₹50 budget</strong><span class="note">Per player. Starting bid is ₹2.</span></div>
+<div class="rule"><strong>+₹1 to +₹4</strong><span class="note">Each bid can raise the price by up to ₹4.</span></div>
+<div class="rule"><strong>Buy, then choose 5</strong><span class="note">You may buy more, but final collection is exactly five.</span></div>
+<div class="rule"><strong>Choose a mix</strong><span class="note">Final 3 series + 2 movies, or 2 series + 3 movies.</span></div>
+</div>
+</section>
+<section class="panel wide hidden" id="roomPanel">
+<div class="bidrow"><div><h2>🎬 Room <span id="roomLabel" class="blue"></span></h2><div class="note">Share this code with your friends so they can join.</div></div><button class="ghost" id="copyRoomBtn">Copy room code</button></div>
+<div class="statrow" style="margin:14px 0"><div class="stat"><strong>₹<span id="myBudget">50</span></strong><span>Your remaining budget</span></div><div class="stat"><strong id="playerCount">1</strong><span>Players connected</span></div><div class="stat"><strong id="titlesLeft">37</strong><span>Titles not auctioned</span></div></div>
+<div class="playerlist" id="players"></div>
+<div class="status" id="roomStatus">Waiting for players…</div>
+</section>
+<section class="panel half hidden" id="auctionPanel">
+<h2>🔨 <span class="red">Live auction</span></h2>
+<div id="currentTag" class="tag movie">MOVIE</div><div class="auctiontitle" id="currentTitle">Waiting for host to start</div>
+<div class="bidrow"><div><div class="note">Current highest bid</div><div class="bidnum">₹<span id="currentBid">2</span></div><div class="note" id="highBidder">No bids yet</div></div><div class="bid-controls"><label style="margin:0">Raise by ₹<input type="number" id="raiseAmount" min="1" max="4" value="1"></label><button class="primary" id="bidBtn">Bid</button><button class="ghost" id="passBtn">Pass</button></div></div>
+<div class="actions" id="hostActions"><button class="bluebtn" id="startBtn">Start first auction</button><button class="redbtn hidden" id="endBtn">Close auction</button><button class="ghost hidden" id="nextBtn">Next title</button></div>
+<p class="note" id="auctionHint">Only the host can start the next title. Any player can bid or pass.</p>
+</section>
+<section class="panel half hidden" id="inventoryPanel">
+<h2>🧾 <span class="blue">Your purchases</span></h2><div id="inventory" class="note">No titles purchased yet.</div>
+<div class="actions"><button class="primary" id="finalizeBtn">Choose my final 5</button></div>
+<p class="note">Final selection unlocks after you own at least five titles. Pick exactly 5, with either 3 series + 2 movies or 2 series + 3 movies.</p>
+</section>
+<section class="panel wide hidden" id="finalPanel">
+<h2>🏆 <span class="red">Choose your final collection</span></h2><p class="note">Select exactly five titles. The page checks the series/movie combination for you.</p>
+<div id="finalChoices" class="listwrap"></div><div class="actions"><button class="primary" id="saveFinalBtn">Lock in my collection</button><button class="ghost" id="cancelFinalBtn">Cancel</button></div><div id="finalMessage" class="status"></div>
+</section>
+<section class="panel wide hidden" id="catalogPanel">
+<h2>📚 <span class="blue">Title catalogue</span></h2><div class="listwrap"><div><h2 class="red">Series (16)</h2><div class="titlelist serieslist" id="seriesList"></div></div><div><h2 class="blue">Movies (21)</h2><div class="titlelist" id="moviesList"></div></div></div>
+</section>
+<section class="panel wide hidden" id="logPanel"><h2>📣 Auction activity</h2><div class="log" id="activityLog"></div></section>
+</div>
+<div class="footer">Fan-made party game · No affiliation with any movie or series owners.</div>
+</main>
+<script>
+const SERIES=["Breaking Bad","Stranger Things","Money Heist","Game of Thrones","The Boys","Peaky Blinders","One Piece","Death Note","Attack on Titan","Loki","Demon Slayer","Squid Game","Wednesday","The Vampire Diaries","All of Us Are Dead","Alice in Borderland"];
+const MOVIES=["Avengers: Endgame","Interstellar","Avengers: Infinity War","The Shawshank Redemption","Pirates of the Caribbean","3 Idiots","Chhichhore","KGF","Kantara","RRR","Baahubali","Pushpa","Sita Ramam","Sapta Sagaradaache Ello","Premalu","Kung Fu Panda","HIT","Hi Nanna","Googly","Youth","Dhurandhar"];
+const $=id=>document.getElementById(id);
+let peer=null, hostConn=null, isHost=false, myId=null, myName="", roomId="", conns={}, clientNames={}, state=null, chosenFinal=new Set();
+const freshState=()=>({players:[],used:[],current:null,auctionOpen:false,highest:null,highBid:0,passed:[],log:[],finals:{},started:false});
+function addLog(msg){if(!state)return;state.log.unshift(msg);state.log=state.log.slice(0,80)}
+function show(id,yes=true){$(id).classList.toggle("hidden",!yes)}
+function setStatus(msg){$("connectionStatus").textContent=msg}
+function emitState(){render();if(isHost)Object.values(conns).forEach(c=>{try{c.send({type:"state",state})}catch(e){}})}
+function sendAction(action){if(isHost)handleAction(myId,action);else if(hostConn&&hostConn.open)hostConn.send({type:"action",action});else setStatus("Connection to host lost.")}
+function playerById(id){return state?.players.find(p=>p.id===id)}
+function currentPlayer(){return playerById(myId)}
+function render(){
+ if(!state)return;
+ ["roomPanel","auctionPanel","inventoryPanel","catalogPanel","logPanel"].forEach(id=>show(id,true));
+ $("roomLabel").textContent=roomId;$("myBudget").textContent=currentPlayer()?.budget??50;
+ $("playerCount").textContent=state.players.length;$("titlesLeft").textContent=37-state.used.length;
+ $("players").innerHTML=state.players.map(p=>`<span class="player">${p.name}${p.id===myId?' <b>(you)</b>':''} · ₹${p.budget}</span>`).join("");
+ $("roomStatus").textContent=state.started?"Auction in progress — bid wisely!":"Waiting for the host to start the auction.";
+ const c=state.current;
+ $("currentTitle").textContent=c?c.title:"Waiting for host to start";
+ $("currentTag").textContent=c?c.type:"READY";$("currentTag").className="tag "+(c?.type==="SERIES"?"series":"movie");
+ $("currentBid").textContent=state.highBid||2;
+ $("highBidder").textContent=state.highest?`Highest bidder: ${playerById(state.highest)?.name||"Player"}`:"No bids yet — opening price ₹2";
+ $("bidBtn").disabled=!state.auctionOpen||!c||state.passed.includes(myId)||!currentPlayer()||currentPlayer().budget < Math.max(2,state.highBid+1);
+ $("passBtn").disabled=!state.auctionOpen||!c||state.passed.includes(myId);
+ $("startBtn").classList.toggle("hidden",!isHost||state.started);
+ $("endBtn").classList.toggle("hidden",!isHost||!state.auctionOpen);
+ $("nextBtn").classList.toggle("hidden",!isHost||state.auctionOpen||!state.started);
+ $("auctionHint").textContent=state.auctionOpen?`${state.passed.length} player(s) passed. Host can close the auction when ready.`:"Host controls the auction flow. A title starts at ₹2.";
+ const mine=currentPlayer()?.purchases||[];
+ $("inventory").innerHTML=mine.length?mine.map(p=>`<div class="titleitem"><span class="num">${p.type==="SERIES"?"S":"M"}</span><span>${p.title}</span><span class="smalltag">₹${p.price}</span></div>`).join(""):"No titles purchased yet.";
+ $("finalizeBtn").disabled=mine.length<5;
+ $("seriesList").innerHTML=SERIES.map((t,i)=>catalogItem(t,"SERIES",i)).join("");
+ $("moviesList").innerHTML=MOVIES.map((t,i)=>catalogItem(t,"MOVIE",i)).join("");
+ $("activityLog").innerHTML=state.log.map(x=>`<div>${escapeHtml(x)}</div>`).join("");
+ if(state.finals[myId]){$("finalMessage").textContent="Your final collection is locked. Good luck!";show("finalPanel",true);$("finalChoices").innerHTML=state.finals[myId].map(p=>`<div class="titleitem">${p.title} <span class="smalltag">${p.type}</span></div>`).join("");$("saveFinalBtn").disabled=true}
+}
+function catalogItem(t,type,i){const used=state?.used.includes(type+":"+t);return `<div class="titleitem"><span class="num">${i+1}</span><span>${escapeHtml(t)}</span><span class="smalltag">${used?"AUCTIONED":type}</span></div>`}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderFinalChoices(){
+ const mine=currentPlayer()?.purchases||[];
+ $("finalChoices").innerHTML=mine.map((p,i)=>`<label class="titleitem" style="cursor:pointer"><input type="checkbox" data-final="${i}" style="width:auto" ${chosenFinal.has(i)?"checked":""}><span>${escapeHtml(p.title)}</span><span class="smalltag">${p.type}</span></label>`).join("");
+ $("finalChoices").querySelectorAll("[data-final]").forEach(el=>el.addEventListener("change",()=>{const i=Number(el.dataset.final);if(el.checked){if(chosenFinal.size>=5){el.checked=false;$("finalMessage").textContent="Choose only five titles.";return}chosenFinal.add(i)}else chosenFinal.delete(i);$("finalMessage").textContent=`Selected ${chosenFinal.size}/5`; }));
+}
+function handleAction(from,action){
+ if(!isHost||!state)return;
+ const p=playerById(from);if(!p)return;
+ if(action.kind==="start"){
+   if(state.started)return;
+   state.started=true;startNext();addLog(`${p.name} started the auction.`);
+ } else if(action.kind==="bid"){
+   if(!state.auctionOpen||state.passed.includes(from))return;
+   const inc=Math.max(1,Math.min(4,Number(action.amount)||1)), amount=(state.highest?state.highBid:2)+inc;
+   // First bid can be the opening price plus the chosen increment.
+   if(amount>p.budget)return;
+   if(state.highest===from){addLog(`${p.name} is already the highest bidder.`);return}
+   state.highest=from;state.highBid=amount;addLog(`${p.name} bids ₹${amount} on ${state.current.title}.`);
+ } else if(action.kind==="pass"){
+   if(!state.auctionOpen||state.passed.includes(from))return;
+   state.passed.push(from);addLog(`${p.name} passed on ${state.current.title}.`);
+ } else if(action.kind==="close"){
+   if(!state.auctionOpen)return;
+   state.auctionOpen=false;
+   if(state.highest){const winner=playerById(state.highest);if(winner&&winner.budget>=state.highBid){winner.budget-=state.highBid;winner.purchases.push({...state.current,price:state.highBid});addLog(`${winner.name} won ${state.current.title} for ₹${state.highBid}.`)}}
+   else addLog(`${state.current.title} received no bids.`);
+ } else if(action.kind==="next"){
+   if(state.auctionOpen)return;startNext();
+ } else if(action.kind==="final"){
+   const items=action.items||[];
+   if(items.length!==5)return;
+   const ss=items.filter(x=>x.type==="SERIES").length, mm=items.filter(x=>x.type==="MOVIE").length;
+   if(!((ss===3&&mm===2)||(ss===2&&mm===3)))return;
+   state.finals[from]=items;addLog(`${p.name} locked their final collection.`);
+ }
+ emitState();
+}
+function startNext(){
+ const available=[...SERIES.filter(t=>!state.used.includes("SERIES:"+t)).map(title=>({title,type:"SERIES"})),...MOVIES.filter(t=>!state.used.includes("MOVIE:"+t)).map(title=>({title,type:"MOVIE"}))];
+ if(!available.length){state.current=null;state.auctionOpen=false;addLog("All 37 titles have been auctioned.");return}
+ // Randomize the next title so the auction order varies each game.
+ const next=available[Math.floor(Math.random()*available.length)];
+ state.used.push(next.type+":"+next.title);state.current=next;state.auctionOpen=true;state.highest=null;state.highBid=2;state.passed=[];addLog(`Now auctioning ${next.title} (opening price ₹2).`);
+}
+function connectDataConnection(conn){
+ conn.on("open",()=>{conns[conn.peer]=conn;conn.send({type:"welcome",roomId,hostId:myId,state});setStatus("Friend connected.");});
+ conn.on("data",msg=>{if(!isHost)return;if(msg.type==="hello"){if(state.players.some(p=>p.id===conn.peer))return;state.players.push({id:conn.peer,name:String(msg.name||"Player").slice(0,18),budget:50,purchases:[]});clientNames[conn.peer]=msg.name;addLog(`${msg.name||"A player"} joined the room.`);emitState()}else if(msg.type==="action")handleAction(conn.peer,msg.action)});
+ conn.on("close",()=>{delete conns[conn.peer];if(isHost){const p=playerById(conn.peer);if(p){addLog(`${p.name} disconnected.`);emitState()}}});
+}
+async function createRoom(){
+ myName=$("playerName").value.trim()||"Host";isHost=true;setStatus("Creating room…");
+ try{
+  peer=new Peer();peer.on("open",id=>{myId=id;roomId=id;state=freshState();state.players=[{id:myId,name:myName,budget:50,purchases:[]}];setStatus("Room created. Share the room code with friends.");emitState();});
+  peer.on("connection",connectDataConnection);peer.on("error",e=>setStatus("Connection issue: "+e.type+". Try creating the room again."));
+ }catch(e){setStatus("Could not create room. Check your internet connection.");}
+}
+function joinRoom(){
+ myName=$("playerName").value.trim()||"Player";const hostId=$("roomCode").value.trim();if(!hostId){setStatus("Enter your friend's room code first.");return}
+ isHost=false;setStatus("Connecting to host…");
+ try{
+  peer=new Peer();peer.on("open",id=>{myId=id;hostConn=peer.connect(hostId,{reliable:true});hostConn.on("open",()=>{hostConn.send({type:"hello",name:myName});setStatus("Connected to host.");});hostConn.on("data",msg=>{if(msg.type==="welcome"){roomId=msg.roomId;state=msg.state;emitState()}else if(msg.type==="state"){state=msg.state;emitState()}});hostConn.on("close",()=>setStatus("Host disconnected."));});
+  peer.on("error",e=>setStatus("Could not connect: "+e.type+". Check the room code and try again."));
+ }catch(e){setStatus("Could not connect. Check your internet connection.");}
+}
+$("createBtn").onclick=createRoom;$("joinBtn").onclick=joinRoom;
+$("copyRoomBtn").onclick=()=>{navigator.clipboard?.writeText(roomId).then(()=>setStatus("Room code copied!")).catch(()=>setStatus("Room code: "+roomId));};
+$("startBtn").onclick=()=>sendAction({kind:"start"});
+$("endBtn").onclick=()=>sendAction({kind:"close"});
+$("nextBtn").onclick=()=>sendAction({kind:"next"});
+$("bidBtn").onclick=()=>{const inc=Number($("raiseAmount").value);if(!Number.isInteger(inc)||inc<1||inc>4){$("auctionHint").textContent="Bid increment must be from ₹1 to ₹4.";return}sendAction({kind:"bid",amount:inc})};
+$("passBtn").onclick=()=>sendAction({kind:"pass"});
+$("finalizeBtn").onclick=()=>{chosenFinal=new Set();renderFinalChoices();$("finalMessage").textContent="Selected 0/5";show("finalPanel",true);$("finalPanel").scrollIntoView({behavior:"smooth",block:"start"})};
+$("cancelFinalBtn").onclick=()=>show("finalPanel",false);
+$("saveFinalBtn").onclick=()=>{const mine=currentPlayer()?.purchases||[],items=[...chosenFinal].map(i=>mine[i]).filter(Boolean);if(items.length!==5){$("finalMessage").textContent="Select exactly five titles.";return}const s=items.filter(p=>p.type==="SERIES").length,m=items.filter(p=>p.type==="MOVIE").length;if(!((s===3&&m===2)||(s===2&&m===3))){$("finalMessage").textContent="Choose 3 series + 2 movies, or 2 series + 3 movies.";return}sendAction({kind:"final",items});$("finalMessage").textContent="Collection submitted!";};
+</script>
+</body></html>
