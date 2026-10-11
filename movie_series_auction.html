@@ -29,7 +29,7 @@ button{border:0;border-radius:10px;padding:11px 14px;font:inherit;font-weight:80
 <div class="actions"><button class="primary" id="createBtn">Create room (Host)</button></div>
 <label for="roomCode">Host room code</label><input id="roomCode" placeholder="Paste your friend's room code">
 <div class="actions"><button class="bluebtn" id="joinBtn">Join room</button></div>
-<p class="note">Everyone needs this page open and an internet connection. The host creates the room and shares the code. Multiplayer connection uses PeerJS.</p>
+<p class="note">Everyone needs this page open and an internet connection. The host creates the room and shares a 5-letter code. Multiplayer connection uses PeerJS.</p>
 <div class="status" id="connectionStatus">Not connected yet.</div>
 </section>
 <section class="panel half">
@@ -74,6 +74,7 @@ button{border:0;border-radius:10px;padding:11px 14px;font:inherit;font-weight:80
 const SERIES=["Breaking Bad","Stranger Things","Money Heist","Game of Thrones","The Boys","Peaky Blinders","One Piece","Death Note","Attack on Titan","Loki","Demon Slayer","Squid Game","Wednesday","The Vampire Diaries","All of Us Are Dead","Alice in Borderland"];
 const MOVIES=["Avengers: Endgame","Interstellar","Avengers: Infinity War","The Shawshank Redemption","Pirates of the Caribbean","3 Idiots","Chhichhore","KGF","Kantara","RRR","Baahubali","Pushpa","Sita Ramam","Sapta Sagaradaache Ello","Premalu","Kung Fu Panda","HIT","Hi Nanna","Googly","Youth","Dhurandhar"];
 const $=id=>document.getElementById(id);
+const generateRoomCode=()=>Array.from({length:5},()=>String.fromCharCode(65+Math.floor(Math.random()*26))).join("");
 let peer=null, hostConn=null, isHost=false, myId=null, myName="", roomId="", conns={}, clientNames={}, state=null, chosenFinal=new Set();
 const freshState=()=>({players:[],used:[],current:null,auctionOpen:false,highest:null,highBid:0,passed:[],log:[],finals:{},started:false});
 function addLog(msg){if(!state)return;state.log.unshift(msg);state.log=state.log.slice(0,80)}
@@ -161,14 +162,14 @@ function connectDataConnection(conn){
  conn.on("close",()=>{delete conns[conn.peer];if(isHost){const p=playerById(conn.peer);if(p){addLog(`${p.name} disconnected.`);emitState()}}});
 }
 async function createRoom(){
- myName=$("playerName").value.trim()||"Host";isHost=true;setStatus("Creating room…");
+ myName=$("playerName").value.trim()||"Host";roomId=generateRoomCode();isHost=true;setStatus("Creating room…");
  try{
-  peer=new Peer();peer.on("open",id=>{myId=id;roomId=id;state=freshState();state.players=[{id:myId,name:myName,budget:50,purchases:[]}];setStatus("Room created. Share the room code with friends.");emitState();});
+  peer=new Peer(roomId,{debug:0});peer.on("open",id=>{myId=id;state=freshState();state.players=[{id:myId,name:myName,budget:50,purchases:[]}];setStatus("Room created. Share the room code with friends.");emitState();});
   peer.on("connection",connectDataConnection);peer.on("error",e=>setStatus("Connection issue: "+e.type+". Try creating the room again."));
  }catch(e){setStatus("Could not create room. Check your internet connection.");}
 }
 function joinRoom(){
- myName=$("playerName").value.trim()||"Player";const hostId=$("roomCode").value.trim();if(!hostId){setStatus("Enter your friend's room code first.");return}
+ myName=$("playerName").value.trim()||"Player";const hostId=$("roomCode").value.trim().toUpperCase();if(!hostId||!/^[A-Z]{5}$/.test(hostId)){setStatus("Enter a valid 5-letter room code first.");return}
  isHost=false;setStatus("Connecting to host…");
  try{
   peer=new Peer();peer.on("open",id=>{myId=id;hostConn=peer.connect(hostId,{reliable:true});hostConn.on("open",()=>{hostConn.send({type:"hello",name:myName});setStatus("Connected to host.");});hostConn.on("data",msg=>{if(msg.type==="welcome"){roomId=msg.roomId;state=msg.state;emitState()}else if(msg.type==="state"){state=msg.state;emitState()}});hostConn.on("close",()=>setStatus("Host disconnected."));});
